@@ -1,7 +1,7 @@
 [project]
-name = "rl-for-grid-world"
+name = "rl_grid_world"
 version = "0.1.0"
-description = "Add your description here"
+description = "Gimnasium environment for RL algorithms tests"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

@@ -26,3 +26,12 @@ nav:
   - API Reference:
       - Среды: envs.md
       - Агенты: agents.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.arithmatex:
+      generic: true

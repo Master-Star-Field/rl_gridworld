@@ -1688,7 +1688,7 @@ wheels = [
 ]
 
 [[package]]
-name = "rl-for-grid-world"
+name = "rl-grid-world"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
