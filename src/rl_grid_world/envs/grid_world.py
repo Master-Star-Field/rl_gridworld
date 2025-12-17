@@ -6,6 +6,7 @@
 о текущей клетке. Цель агента — достичь клетки с целью.
 
 Пример использования:
+
     >>> env = GridWorldEnv(h=5, w=5, n_colors=3, render_mode='human')
     >>> obs, _ = env.reset(seed=42)
     >>> print(obs)  # One-hot вектор наблюдения
@@ -29,6 +30,7 @@ stateDiagram-v2
 ```
 
 Note:
+
     - Среда использует одномерные one-hot векторы для наблюдений.
     - Координаты в сетке начинаются с (0, 0) в верхнем левом углу.
     - Использование `see_obstacle=True` позволяет получать информацию о препятствиях.
@@ -45,7 +47,7 @@ from gymnasium import spaces
 
 class GridWorldEnv(gym.Env):
     
-    """Среда-сетка для задач обучения с подкреплением.
+    r"""Среда-сетка для задач обучения с подкреплением.
 
     Среда представляет собой двумерную сетку размером h×w, окруженную стенами.
     Внутри сетки могут располагаться препятствия и одна клетка-цель.
@@ -114,6 +116,7 @@ class GridWorldEnv(gym.Env):
         - 'rgb_array': Возврат RGB-массива изображения
 
     Example:
+    
         >>> env = GridWorldEnv(h=4, w=4, n_colors=2, obstacle_mask=np.array([
         ...     [False, True,  False, False],
         ...     [False, False, False, False],
@@ -149,7 +152,7 @@ class GridWorldEnv(gym.Env):
         see_obstacle: bool = True,
         render_mode: Optional[str] = None
         ):
-        """Инициализирует среду GridWorld.
+        r"""Инициализирует среду GridWorld.
 
         Args:
             h: Высота внутренней сетки. По умолчанию 10.
@@ -171,6 +174,7 @@ class GridWorldEnv(gym.Env):
             ValueError: Если pos_goal вне границ сетки.
 
         Example:
+        
             >>> # Среда 5x5 с 2 цветами пола и 3 препятствиями
             >>> mask = np.array([
             ...     [0, 1, 0, 0, 0],
@@ -184,6 +188,7 @@ class GridWorldEnv(gym.Env):
             ...                    see_obstacle=True, render_mode='human')
 
         Note:
+        
             Если obstacle_mask передан в транспонированном виде (w, h),
             он автоматически транспонируется для соответствия (h, w).
         """
@@ -249,6 +254,7 @@ class GridWorldEnv(gym.Env):
             ```
 
         Example:
+        
             >>> env = GridWorldEnv(h=3, w=3, n_colors=2, obstacle_mask=np.array([
             ...     [0, 1, 0],
             ...     [0, 0, 0],
@@ -282,7 +288,7 @@ class GridWorldEnv(gym.Env):
 
     def _get_obs(self):
         
-        """Возвращает наблюдение агента в виде one-hot вектора.
+        r"""Возвращает наблюдение агента в виде one-hot вектора.
 
         Наблюдение основано на позиции self.see_pos, которая может отличаться
         от позиции агента, если произошло столкновение с препятствием.
@@ -298,6 +304,7 @@ class GridWorldEnv(gym.Env):
             \end{cases}\]
 
         Example:
+        
             >>> env = GridWorldEnv(n_colors=2)
             >>> env._init_grid(seed=1)
             >>> env.agent_pos = np.array([1, 1])
@@ -340,6 +347,7 @@ class GridWorldEnv(gym.Env):
             ValueError: Если матрица start_pos несовместима с размерами сетки.
 
         Example:
+        
             # Фиксированная начальная позиция
             >>> env = GridWorldEnv(pos_agent=(2, 2))
             >>> obs, info = env.reset(seed=42)
@@ -385,12 +393,13 @@ class GridWorldEnv(gym.Env):
         return self._get_obs(), {}
 
     def step(self, action: int):
-        """Выполняет одно действие в среде.
+        r"""Выполняет одно действие в среде.
 
         Args:
             action (int): Действие агента (0-3).
 
         Returns:
+        
             Tuple[np.ndarray, float, bool, bool, dict]:
                 - Наблюдение после действия
                 - Награда (1.0 при достижении цели, иначе 0.0)
@@ -420,6 +429,7 @@ class GridWorldEnv(gym.Env):
             где \(\vec{v} = [ [-1,0], [0,1], [1,0], [0,-1] ]\)
 
         Example:
+        
             >>> env = GridWorldEnv(h=3, w=3, pos_goal=(2, 2))
             >>> obs, _ = env.reset(seed=1)
             >>> print('До действия:', env.agent_pos)
@@ -476,6 +486,7 @@ class GridWorldEnv(gym.Env):
             получения массива пикселей.
 
         Example:
+        
             >>> env = GridWorldEnv(render_mode='human')
             >>> obs, _ = env.reset()
             >>> env.render()  # Покажет окно с сеткой
@@ -503,6 +514,7 @@ class GridWorldEnv(gym.Env):
             Проводятся по границам клеток для лучшей видимости.
 
         Example:
+        
             >>> env = GridWorldEnv(n_colors=3, render_mode='human')
             >>> env.reset(seed=1)
             >>> env.render_map()  # Откроется окно с визуализацией
