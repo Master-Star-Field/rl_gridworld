@@ -1,0 +1,53 @@
+batch_size: 32
+buffer_size: 500
+burn_in: 5
+env_params:
+  h: 10
+  n_colors: 7
+  obstacle_mask: !!python/object/apply:numpy._core.multiarray._reconstruct
+    args:
+    - !!python/name:numpy.ndarray ''
+    - !!python/tuple
+      - 0
+    - !!binary |
+      Yg==
+    state: !!python/tuple
+    - 1
+    - !!python/tuple
+      - 10
+      - 10
+    - !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - false
+    - !!binary |
+      AQEAAAAAAAAAAAEAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAEB
+      AAAAAAAAAAAAAAAAAAAAAAEAAAEAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAA==
+  pos_agent: !!python/tuple
+  - 1
+  - 1
+  pos_goal: !!python/tuple
+  - 4
+  - 4
+  render_mode: rgb_array
+  w: 10
+epsilon_decay: 3000
+epsilon_end: 0.01
+epsilon_start: 1.0
+gamma: 0.99
+hidden_dim: 128
+lr: 0.002
+min_episodes_before_training: 10
+seq_len: 8
+sync_rate: 500

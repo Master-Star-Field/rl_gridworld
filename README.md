@@ -8,7 +8,9 @@
 
 ```shell
 cd rl-grid-world  # Перейдите в корень проекта
-pip install -e .
+pip install uv
+uv pip install -e .
+
 ```
 
 
@@ -94,7 +96,7 @@ print(f"Начальная позиция: {env.agent_pos}")
 Примеры скрипта доступен в файле /test.py:
 
 ```shell
-python test.py
+uv run python -m src.examples.test
 ```
 
 ## Документация

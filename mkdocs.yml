@@ -20,6 +20,7 @@ nav:
   - API Reference:
       - Среды: envs.md
       - Агенты: agents.md
+      - Вспомогательные функции: utils.md
 
 # Плагины
 plugins:

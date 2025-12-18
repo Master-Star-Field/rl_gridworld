@@ -82,14 +82,14 @@ class GridWorldEnv(gym.Env):
 
         Действие применяется к текущей позиции агента:
 
-        \[\text{target\_pos} = \text{agent\_pos} + \text{move\_vector}\]
+        $$\text{target\_pos} = \text{agent\_pos} + \text{move\_vector}$$
 
     Observation Space:
         Пространство наблюдений — вещественный вектор размерности
         (n_colors + 3), закодированный как one-hot вектор,
         где 3 дополнительных признака соответствуют стене, препятствию и цели.
 
-        \[\text{shape} = (\text{n\_colors} + 3,)\]
+        $$\text{shape} = (\text{n\_colors} + 3,)$$
 
         Например, при n_colors=2:
 
@@ -197,6 +197,7 @@ class GridWorldEnv(gym.Env):
         self.n_colors = n_colors
         self.pos_goal = np.array(pos_goal)
         self.start_pos = pos_agent
+        self.max_steps = h * w 
         self.see_obstacle = see_obstacle
         self.render_mode = render_mode
 
@@ -298,10 +299,10 @@ class GridWorldEnv(gym.Env):
                         где индекс значения 1.0 соответствует типу клетки.
 
         Formula:
-            \[\text{obs}[i] = \begin{cases}
+            $$\text{obs}[i] = \begin{cases}
             1, & \text{если } i = \text{grid}[\text{see\_pos}] \\
             0, & \text{иначе}
-            \end{cases}\]
+            \end{cases}$$
 
         Example:
         
@@ -367,9 +368,10 @@ class GridWorldEnv(gym.Env):
         self._init_grid(seed)
         
         pos_config = np.array(self.start_pos)
+        self.current_step = 0 
         
         if pos_config.ndim == 1:
-            self.agent_pos = pos_config
+            self.agent_pos = pos_config + 1
         else:
             probs = np.array(pos_config, dtype=np.float32)
             
@@ -384,7 +386,7 @@ class GridWorldEnv(gym.Env):
                 probs /= total  
                 flat_idx = self.np_random.choice(probs.size, p=probs.flatten())
                 coords = np.unravel_index(flat_idx, probs.shape)
-                self.agent_pos = np.array(coords)
+                self.agent_pos = np.array(coords) + 1
             else:
                 self.agent_pos = np.array([1, 1])
 
@@ -424,9 +426,9 @@ class GridWorldEnv(gym.Env):
             ```
 
         Formula:
-            \[\text{target\_pos} = \text{agent\_pos} + \vec{v}[\text{action}]\]
+            $$\text{target\_pos} = \text{agent\_pos} + \vec{v}[\text{action}]$$
 
-            где \(\vec{v} = [ [-1,0], [0,1], [1,0], [0,-1] ]\)
+            где $$\vec{v} = [ [-1,0], [0,1], [1,0], [0,-1] ]$$
 
         Example:
         
@@ -443,17 +445,21 @@ class GridWorldEnv(gym.Env):
             >>> print('Завершено:', terminated)
             Завершено: True
         """
+        
         # Векторы движения: [вверх, вправо, вниз, влево]
         v = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])
         
         move = v[action]
+        
+        self.current_step += 1
+        
         target_pos = self.agent_pos + move
         
         see_value = self.grid[tuple(target_pos)]
         
         reward = 0.0
         terminated = False
-        
+        truncated = False
 
         is_blocked = (see_value == self.feature_wall) or (see_value == self.feature_obstacle)
         
@@ -472,7 +478,11 @@ class GridWorldEnv(gym.Env):
                 reward = 1.0
                 terminated = True
                 
-        return self._get_obs(), reward, terminated, False, {}
+                
+        if self.current_step >= self.max_steps:
+            truncated = True
+            
+        return self._get_obs(), reward, terminated, truncated, {}
     
     def render(self):
         

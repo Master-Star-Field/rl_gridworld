@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "gymnasium>=1.2.2",
     "hydra-core>=1.3.2",
+    "imageio>=2.37.2",
     "lightning>=2.6.0",
     "matplotlib>=3.10.8",
     "numpy>=2.3.5",
@@ -30,3 +31,7 @@ dev = [
     "mkdocs-material>=9.7.0",
     "mkdocstrings[python]>=1.0.0",
 ]
+
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rl_grid_world"]

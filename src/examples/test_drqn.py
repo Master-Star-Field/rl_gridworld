@@ -2,58 +2,56 @@ import numpy as np
 import torch
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
-
+from lightning.pytorch.loggers import WandbLogger
 from src.rl_grid_world.envs.grid_world import GridWorldEnv
-from src.rl_grid_world.agents.drqn_agent import DRQN_Lightning
+from src.rl_grid_world.agents.drqn_agent import DRQNLightning
+from src.rl_grid_world.agents.drqn_agent import train_drqn_gridworld
+from src.rl_grid_world.utils.save_gif import save_episode_gif
+from src.rl_grid_world.utils.generate_wall import generate_walls
+import wandb
+if __name__ == "__main__":
 
-mask = np.zeros((6, 6))
-mask[2, 1:5] = 1 
+    h, w = 10, 10
+    start = (0, 0)  
+    goal = (h - 1, w - 1)
+    obstacle_ratio = 0.2
 
-env_config = {
-        "h": 6, 
-        "w": 6,
-        "n_colors": 2,
-        "pos_goal": (5, 5),
-        "pos_agent": (0, 0),
-        "obstacle_mask": mask,
-        "render_mode": "rgb_array"
-    }
+    obstacle_mask = generate_walls(
+        h=h,
+        w=w,
+        obstacle_ratio=obstacle_ratio,
+        start=start,
+        goal=goal,
+    )
 
-model = DRQN_Lightning(
-        env_params=env_config,
-        seq_len=8,
+    env_params = dict(
+        h=h,
+        w=w,
+        n_colors=4,
+        obstacle_mask=obstacle_mask,
+        pos_goal=goal,
+        pos_agent=np.ones((h, w)),
+        see_obstacle=True,
+        render_mode=None,
+    )
+
+    train_drqn_gridworld(
+        env_params=env_params,
+        max_steps=24000,
+        lr=1e-3,
+        gamma=0.99,
+        seq_len=20,
+        burn_in=5,
         batch_size=32,
-        lr=2e-3,
-        epsilon_decay=3000
-)
-
-trainer = pl.Trainer(
-        max_steps=10000,
-        accelerator="gpu" if torch.cuda.is_available() else "cpu",
-        devices=1,
-        log_every_n_steps=50
-)
-
-print("Начинаем обучение DRQN (с памятью LSTM)...")
-trainer.fit(model)
-    
-print("Тестирование...")
-model.eval()
-test_env = GridWorldEnv(**env_config, render_mode="human")
-    
-state, _ = test_env.reset()
-hidden = None 
-done = False
-    
-while not done:
-    test_env.render()
-        
-    state_t = torch.FloatTensor(state).view(1, 1, -1).to(model.device)
-        
-    with torch.no_grad():
-        q_values, hidden = model.q_net(state_t, hidden)
-        action = q_values.argmax(dim=2).item()
-            
-    state, reward, term, trunc, _ = test_env.step(action)
-    done = term or trunc
-    plt.pause(0.2)
+        buffer_size=500,
+        min_episodes=10,
+        epsilon_start=1.0,
+        epsilon_end=0.05,
+        epsilon_decay=10_000,
+        sync_rate=1_000,
+        hidden_dim=128,
+        avg_window=100,
+        project="gridworld_drqn",
+        run_name="drqn_dueling_double_20x20",
+        gif_path="20to20c4random_pos.gif",
+    )
