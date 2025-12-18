@@ -19,6 +19,7 @@ wandb/
 logs/
 outputs/
 *.ckpt
+lightning_logs/
 
 # UV
 .uv/
