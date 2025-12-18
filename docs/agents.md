@@ -7,7 +7,7 @@
 
 ## DRQN‑агент
 
-::: rl_grid_world.agents.drqn
+::: rl_grid_world.agents.drqn_agent
     handler: python
     options:
       heading_level: 3
