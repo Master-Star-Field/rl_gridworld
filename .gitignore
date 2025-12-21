@@ -20,6 +20,10 @@ logs/
 outputs/
 *.ckpt
 lightning_logs/
+gifs/
+gridworld_*/
+checkpoints/
+mnist_data/
 
 # UV
 .uv/

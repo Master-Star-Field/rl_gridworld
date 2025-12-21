@@ -17,18 +17,6 @@
     >>> if terminated:
     ...     print(f'Цель достигнута! Награда: {reward}')
 
-Диаграмма состояний агента:
-
-```mermaid
-stateDiagram-v2
-    [*] --> Активен
-    Активен --> Заблокирован: Столкновение со стеной/препятствием
-    Активен --> Цель_достигнута: Достижение клетки с целью
-    Активен --> Активен: Успешное перемещение
-    Заблокирован --> Активен: Продолжение действий
-    Цель_достигнута --> [*]: Завершение эпизода
-```
-
 Note:
 
     - Среда использует одномерные one-hot векторы для наблюдений.
@@ -37,19 +25,20 @@ Note:
 """
 
 from typing import Optional, Union, Tuple
-import gymnasium as gym
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib import colors
+
+import gymnasium as gym
 from gymnasium import spaces
 
 
 class GridWorldEnv(gym.Env):
-    
     r"""Среда-сетка для задач обучения с подкреплением.
 
-    Среда представляет собой двумерную сетку размером h×w, окруженную стенами.
+    Среда представляет собой двумерную сетку размером h*w, окруженную стенами.
     Внутри сетки могут располагаться препятствия и одна клетка-цель.
     Пол может иметь разные цвета (типы), задаваемые параметром n_colors.
 
@@ -72,6 +61,11 @@ class GridWorldEnv(gym.Env):
         agent_pos (np.ndarray): Текущая позиция агента в координатах сетки со стенами.
         see_pos (np.ndarray): Позиция, которую "видит" агент для наблюдений.
 
+        seed (int): Зерно для генерации среды, для возможности повторно сгенерировать карту.
+
+        step_reward (float): Награда/штраф за обычный шаг (по умолчанию 0.0).
+        goal_reward (float): Награда за достижение цели (по умолчанию 1.0).
+
     Action Space:
         Пространство действий — дискретное с 4 направлениями:
 
@@ -80,69 +74,30 @@ class GridWorldEnv(gym.Env):
         - 2: вниз      ( [ 1,  0] )
         - 3: влево     ( [ 0, -1] )
 
-        Действие применяется к текущей позиции агента:
-
-        $$\text{target\_pos} = \text{agent\_pos} + \text{move\_vector}$$
-
     Observation Space:
         Пространство наблюдений — вещественный вектор размерности
         (n_colors + 3), закодированный как one-hot вектор,
         где 3 дополнительных признака соответствуют стене, препятствию и цели.
 
-        $$\text{shape} = (\text{n\_colors} + 3,)$$
-
-        Например, при n_colors=2:
-
-        - [1, 0, 0, 0, 0] — пол типа 0
-        - [0, 1, 0, 0, 0] — пол типа 1
-        - [0, 0, 1, 0, 0] — стена
-        - [0, 0, 0, 1, 0] — препятствие
-        - [0, 0, 0, 0, 1] — цель
-
-        Наблюдение зависит от see_pos, которая может отличаться от agent_pos,
-        если агент столкнулся с препятствием.
+        $$\text{shape} = (\text{n_{colors}} + 3,)$$
 
     Reward:
-        Награда +1.0 начисляется только при достижении цели (клетки GOAL).
-        В остальных случаях награда равна 0.0.
+        По умолчанию:
+          - Награда goal_reward (1.0) при достижении цели (клетки GOAL),
+          - Награда step_reward (0.0) в остальных случаях.
+
+        Можно включить shaping, задав отрицательный step_reward
+        (например, -0.01, чтобы поощрять быстрый путь).
 
     Episode Termination:
-        Эпизод завершается, когда агент достигает клетки с целью.
-
-    Rendering:
-        Поддерживает режимы:
-
-        - 'human': Отображение в окне с помощью matplotlib
-        - 'rgb_array': Возврат RGB-массива изображения
-
-    Example:
-    
-        >>> env = GridWorldEnv(h=4, w=4, n_colors=2, obstacle_mask=np.array([
-        ...     [False, True,  False, False],
-        ...     [False, False, False, False],
-        ...     [True,  False, False, True],
-        ...     [False, False, False, False]]), pos_goal=(3, 3))
-        >>> obs, info = env.reset(seed=42)
-        >>> print('Наблюдение:', obs)
-        Наблюдение: [1. 0. 0. 0. 0.]
-        >>> print('Позиция агента:', env.agent_pos)
-        Позиция агента: [1 1]
-        >>> action = 2  # вниз
-        >>> obs, reward, terminated, truncated, info = env.step(action)
-        >>> print('Новое наблюдение:', obs)
-        Новое наблюдение: [0. 1. 0. 0. 0.]
-        >>> env.close()
-
-    Note:
-        Среда окружена стенами размером в один элемент по периметру,
-        поэтому внутренние координаты смещены на (1, 1) относительно
-        индексов массива self.grid.
+        Эпизод завершается, когда агент достигает клетки с целью или же когда превышено выделенное
+        количество шагов на эпизодов (по умолчанию берется w*h)
     """
 
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
-    
+
     def __init__(
-        self, 
+        self,
         h: int = 10,
         w: int = 10,
         obstacle_mask: Optional[np.ndarray] = None,
@@ -150,406 +105,230 @@ class GridWorldEnv(gym.Env):
         pos_goal: Union[Tuple[int, int], np.ndarray] = (0, 0),
         pos_agent: Union[Tuple[int, int], np.ndarray] = (1, 1),
         see_obstacle: bool = True,
-        render_mode: Optional[str] = None
-        ):
-        r"""Инициализирует среду GridWorld.
+        render_mode: Optional[str] = None,
+        seed: Optional[int] = None,
+        step_reward: float = 0.0,
+        goal_reward: float = 1.0,
+    ):
+        super().__init__()
 
-        Args:
-            h: Высота внутренней сетки. По умолчанию 10.
-            w: Ширина внутренней сетки. По умолчанию 10.
-            obstacle_mask: Булев массив (h, w), где True — препятствие. 
-                           Если None, препятствий нет.
-            n_colors: Количество типов пола (цветов). По умолчанию 1.
-            pos_goal: Позиция цели в формате (row, col). По умолчанию (0, 0).
-            pos_agent: Позиция агента.
-                        Может быть:
-                        - кортеж (r, c) — фиксированная позиция
-                        - массив (h, w) — распределение вероятностей
-                        По умолчанию (1, 1).
-            see_obstacle: Если True, агент "видит" препятствия при столкновении
-                          (see_pos обновляется). Иначе see_pos остаётся на позиции агента.
-            render_mode: Режим отрисовки. Допустимые значения: 'human', 'rgb_array'.
-
-        Raises:
-            ValueError: Если pos_goal вне границ сетки.
-
-        Example:
-        
-            >>> # Среда 5x5 с 2 цветами пола и 3 препятствиями
-            >>> mask = np.array([
-            ...     [0, 1, 0, 0, 0],
-            ...     [0, 1, 0, 1, 0],
-            ...     [0, 0, 0, 0, 0],
-            ...     [0, 0, 0, 0, 0],
-            ...     [0, 0, 0, 0, 0]
-            ... ]).astype(bool)
-            >>> env = GridWorldEnv(h=5, w=5, n_colors=2, obstacle_mask=mask,
-            ...                    pos_goal=(4, 4), pos_agent=(1, 1),
-            ...                    see_obstacle=True, render_mode='human')
-
-        Note:
-        
-            Если obstacle_mask передан в транспонированном виде (w, h),
-            он автоматически транспонируется для соответствия (h, w).
-        """
-        self.h = h
-        self.w = w
-        self.n_colors = n_colors
-        self.pos_goal = np.array(pos_goal)
+        self.h = int(h)
+        self.w = int(w)
+        self.n_colors = int(n_colors)
+        self.pos_goal = np.array(pos_goal, dtype=int)
         self.start_pos = pos_agent
-        self.max_steps = h * w 
-        self.see_obstacle = see_obstacle
+        self.max_steps = self.h * self.w
+        self.see_obstacle = bool(see_obstacle)
         self.render_mode = render_mode
 
-        if np.any(self.pos_goal < 0) or np.any(self.pos_goal >= np.array([h, w])):
-            raise ValueError(f"pos_goal {self.pos_goal} вне границ сетки {h}x{w}")
+        self.seed = seed
+
+        self.step_reward = float(step_reward)
+        self.goal_reward = float(goal_reward)
+
+        if np.any(self.pos_goal < 0) or np.any(self.pos_goal >= np.array([self.h, self.w])):
+            raise ValueError(f"pos_goal {self.pos_goal} вне границ сетки {self.h}x{self.w}")
 
         if obstacle_mask is None:
-            self.obstacle_mask = np.zeros((h, w), dtype=bool)
+            self.obstacle_mask = np.zeros((self.h, self.w), dtype=bool)
         else:
-            self.obstacle_mask = np.array(obstacle_mask, dtype=bool)
-            if self.obstacle_mask.shape == (w, h) and w != h:
-                self.obstacle_mask = self.obstacle_mask.T
-        
-        self.feature_wall = n_colors
-        self.feature_obstacle = n_colors + 1
-        self.feature_goal = n_colors + 2
-            
+            mask = np.array(obstacle_mask, dtype=bool)
+            if mask.shape == (self.w, self.h) and self.w != self.h:
+                mask = mask.T
+            if mask.shape != (self.h, self.w):
+                raise ValueError(
+                    f"obstacle_mask имеет форму {mask.shape}, а должна быть ({self.h}, {self.w})"
+                )
+            self.obstacle_mask = mask
+
+        self.feature_wall = self.n_colors
+        self.feature_obstacle = self.n_colors + 1
+        self.feature_goal = self.n_colors + 2
+
         self.action_space = spaces.Discrete(4)
         self.observation_space = spaces.Box(
-            low=0, 
-            high=1, 
-            shape=(self.feature_goal + 1,), 
-            dtype=np.float32
+            low=0.0,
+            high=1.0,
+            shape=(self.feature_goal + 1,),
+            dtype=np.float32,
         )
-        
-        # Сетка с дополнительными стенами по краям: (h+2, w+2)
-        self.grid = np.zeros((h + 2, w + 2), dtype=int)
-        
-        self.agent_pos = np.array([0, 0])
-        self.see_pos = np.array([0, 0])
-        
-    def _init_grid(self, seed: Optional[int]):
-        
-        """Инициализирует внутреннюю сетку среды.
 
-        Заполняет сетку следующим образом:
+        self.grid = np.zeros((self.h + 2, self.w + 2), dtype=int)
+
+        self.agent_pos = np.array([0, 0], dtype=int)
+        self.see_pos = np.array([0, 0], dtype=int)
+
+        self.current_step = 0
+
+    def _init_grid(self, seed: Optional[int]):
+        r"""Инициализирует внутреннюю сетку среды.
+
         1. Вся сетка заполняется стенами (значение = feature_wall)
         2. Внутренняя область (h×w) заполняется случайными типами пола
            или препятствиями в соответствии с obstacle_mask
         3. Клетка цели устанавливается в заданной позиции
-
-        Args:
-            seed: Сид для генератора случайных чисел. Используется для
-                  инициализации типов пола.
-
-        Process:
-            
-            ```mermaid
-            graph TD
-                A[Начало] --> B[Заполнить стенами]
-                B --> C[Сгенерировать случайные типы пола]
-                C --> D[Применить obstacle_mask]
-                D --> E[Установить позицию цели]
-                E --> F[Завершено]
-            ```
-
-        Example:
-        
-            >>> env = GridWorldEnv(h=3, w=3, n_colors=2, obstacle_mask=np.array([
-            ...     [0, 1, 0],
-            ...     [0, 0, 0],
-            ...     [1, 0, 0]
-            ... ]).astype(bool), pos_goal=(2, 2))
-            >>> env._init_grid(seed=42)
-            >>> print(env.grid)  
-            [[3 3 3 3 3]
-             [3 0 2 1 3]
-             [3 1 1 1 3]
-             [3 2 0 2 3]
-             [3 3 3 3 3]]
         """
-        rng = np.random.default_rng(seed)
-        
+
+        grid_seed = self.seed if self.seed is not None else seed
+        rng = np.random.default_rng(grid_seed)
+
         self.grid.fill(self.feature_wall)
-        
-        
-        random_floors = rng.integers(0, self.n_colors, size=(self.h, self.w))
-        
+
+        random_floors = rng.integers(
+            low=0,
+            high=self.n_colors,
+            size=(self.h, self.w),
+            dtype=int,
+        )
+
         inner_area = np.where(
             self.obstacle_mask,
             self.feature_obstacle,
-            random_floors
+            random_floors,
         )
-        
 
         self.grid[1:-1, 1:-1] = inner_area
-        
-        self.grid[tuple(self.pos_goal + 1)] = self.feature_goal
 
-    def _get_obs(self):
-        
-        r"""Возвращает наблюдение агента в виде one-hot вектора.
+        goal_r, goal_c = (self.pos_goal + 1).astype(int)
+        self.grid[goal_r, goal_c] = self.feature_goal
 
-        Наблюдение основано на позиции self.see_pos, которая может отличаться
-        от позиции агента, если произошло столкновение с препятствием.
-
-        Returns:
-            np.ndarray: One-hot вектор формы (n_colors + 3,) типа float32,
-                        где индекс значения 1.0 соответствует типу клетки.
-
-        Formula:
-            $$\text{obs}[i] = \begin{cases}
-            1, & \text{если } i = \text{grid}[\text{see\_pos}] \\
-            0, & \text{иначе}
-            \end{cases}$$
-
-        Example:
-        
-            >>> env = GridWorldEnv(n_colors=2)
-            >>> env._init_grid(seed=1)
-            >>> env.agent_pos = np.array([1, 1])
-            >>> env.see_pos = np.array([1, 1])  # Пол типа 0
-            >>> obs = env._get_obs()
-            >>> print(obs)
-            [1. 0. 0. 0. 0.]
-            >>> obs_idx = np.argmax(obs)
-            >>> print(f'Тип клетки: {obs_idx}')
-            Тип клетки: 0
-        """
-        
+    def _get_obs(self) -> np.ndarray:
+        r"""Возвращает наблюдение агента в виде one-hot вектора."""
         obs_vec = np.zeros((self.feature_goal + 1,), dtype=np.float32)
         val = self.grid[tuple(self.see_pos)]
         obs_vec[val] = 1.0
         return obs_vec
 
-    def reset(self, seed=None, options=None):
-        """Перезапускает среду в начальное состояние.
+    def reset(self, seed: Optional[int] = None, options=None):
+        """
+        Перезапуск среды.
 
-        Args:
-            seed: Сид для генерации случайных чисел.
-            options: Дополнительные параметры сброса (не используются).
+        seed:
+          - передаётся в super().reset(seed=seed) → инициализирует self.np_random;
+          - используется в _init_grid ТОЛЬКО если self.seed is None.
 
-        Returns:
-            Tuple[np.ndarray, dict]:
-                - Наблюдение после сброса
-                - Словарь дополнительной информации (пустой)
-
-        Process:
-            1. Инициализация генератора случайных чисел
-            2. Создание новой сетки с помощью _init_grid
-            3. Установка начальной позиции агента:
-               - Если start_pos — вектор (напр. [1, 1]), используем напрямую
-               - Если start_pos — матрица (h, w), выбираем позицию
-                 с вероятностями из этой матрицы
-            4. see_pos устанавливается равным agent_pos
-
-        Raises:
-            ValueError: Если матрица start_pos несовместима с размерами сетки.
-
-        Example:
-        
-            # Фиксированная начальная позиция
-            >>> env = GridWorldEnv(pos_agent=(2, 2))
-            >>> obs, info = env.reset(seed=42)
-            >>> print(env.agent_pos)
-            [2 2]
-
-            # Случайная начальная позиция по распределению
-            >>> start_probs = np.ones((5, 5))
-            >>> start_probs[0, :] = 0  # Запрет первой строки
-            >>> start_probs[:, 0] = 0  # Запрет первого столбца
-            >>> env = GridWorldEnv(h=5, w=5, pos_agent=start_probs)
-            >>> obs, info = env.reset(seed=42)
-            >>> print(env.agent_pos)  # Будет в диапазоне [1:4, 1:4]
-            [3 2]
+        Возвращает:
+          obs:  np.ndarray shape (obs_dim,)
+          info: {}
         """
         super().reset(seed=seed)
+
         self._init_grid(seed)
-        
+
         pos_config = np.array(self.start_pos)
-        self.current_step = 0 
-        
+        self.current_step = 0
+
         if pos_config.ndim == 1:
-            self.agent_pos = pos_config + 1
+            self.agent_pos = pos_config.astype(int) + 1
         else:
             probs = np.array(pos_config, dtype=np.float32)
-            
+
             if probs.shape == (self.w, self.h) and self.w != self.h:
-                 probs = probs.T
-                 
-            probs[self.obstacle_mask] = 0
-            probs[tuple(self.pos_goal)] = 0
-            
+                probs = probs.T
+
+            if probs.shape != (self.h, self.w):
+                raise ValueError(
+                    f"start_pos как распределение имеет форму {probs.shape}, "
+                    f"а должна быть ({self.h}, {self.w})"
+                )
+
+            probs = probs.copy()
+            probs[self.obstacle_mask] = 0.0
+            probs[tuple(self.pos_goal)] = 0.0
+
             total = probs.sum()
             if total > 0:
-                probs /= total  
-                flat_idx = self.np_random.choice(probs.size, p=probs.flatten())
-                coords = np.unravel_index(flat_idx, probs.shape)
-                self.agent_pos = np.array(coords) + 1
+                probs /= total
+                flat_idx = self.np_random.choice(probs.size, p=probs.ravel())
+                rr, cc = np.unravel_index(flat_idx, probs.shape)
+                self.agent_pos = np.array([rr + 1, cc + 1], dtype=int)
             else:
-                self.agent_pos = np.array([1, 1])
+                self.agent_pos = np.array([1, 1], dtype=int)
 
         self.see_pos = self.agent_pos.copy()
-        
+
         return self._get_obs(), {}
 
-    def step(self, action: int):
+    def step(self, action):
         r"""Выполняет одно действие в среде.
 
-        Args:
-            action (int): Действие агента (0-3).
-
-        Returns:
-        
-            Tuple[np.ndarray, float, bool, bool, dict]:
-                - Наблюдение после действия
-                - Награда (1.0 при достижении цели, иначе 0.0)
-                - terminated: True, если агент достиг цели
-                - truncated: False (не используется)
-                - info: Дополнительная информация (пустой словарь)
-
-        Process:
-            
-            ```mermaid
-            graph TD
-                A[Начало] --> B[Вычислить целевую позицию]
-                B --> C{Проверка проходимости}
-                C -->|Заблокировано| D[Обновить see_pos]
-                C -->|Свободно| E[Обновить agent_pos и see_pos]
-                E --> F{Цель достигнута?}
-                F -->|Да| G[Установить terminated=True, reward=1.0]
-                F -->|Нет| H[reward=0.0]
-                G --> I[Возврат результата]
-                H --> I
-                D --> I
-            ```
-
-        Formula:
-            $$\text{target\_pos} = \text{agent\_pos} + \vec{v}[\text{action}]$$
-
-            где $$\vec{v} = [ [-1,0], [0,1], [1,0], [0,-1] ]$$
-
-        Example:
-        
-            >>> env = GridWorldEnv(h=3, w=3, pos_goal=(2, 2))
-            >>> obs, _ = env.reset(seed=1)
-            >>> print('До действия:', env.agent_pos)
-            До действия: [1 1]
-            >>> obs, reward, terminated, truncated, info = env.step(2)  # вниз
-            >>> print('После действия:', env.agent_pos)
-            После действия: [2 1]
-            >>> obs, reward, terminated, truncated, info = env.step(1)  # вправо
-            >>> print('Награда:', reward)
-            Награда: 1.0
-            >>> print('Завершено:', terminated)
-            Завершено: True
+        Награда:
+          - self.step_reward за обычный шаг;
+          - self.goal_reward при достижении цели.
         """
-        
-        # Векторы движения: [вверх, вправо, вниз, влево]
-        v = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])
-        
+
+        if isinstance(action, np.ndarray):
+            if action.ndim == 0:
+                action = int(action)
+            elif action.ndim == 1 and action.size == 1:
+                action = int(action[0])
+
+        action = int(action)
+
+        v = np.array(
+            [
+                [-1, 0],
+                [0, 1],
+                [1, 0],
+                [0, -1],
+            ],
+            dtype=int,
+        )
+
         move = v[action]
-        
+
         self.current_step += 1
-        
+
         target_pos = self.agent_pos + move
-        
         see_value = self.grid[tuple(target_pos)]
-        
-        reward = 0.0
+
+        # базовая награда за шаг (может быть 0.0 или отрицательной)
+        reward = self.step_reward
         terminated = False
         truncated = False
 
         is_blocked = (see_value == self.feature_wall) or (see_value == self.feature_obstacle)
-        
+
         if is_blocked:
             if self.see_obstacle:
-                # Агент "видит" препятствие
+                # Агент видит препятствие/стену
                 self.see_pos = target_pos
             else:
                 # Агент не видит препятствие, видит только свою позицию
                 self.see_pos = self.agent_pos
         else:
             self.agent_pos = target_pos
-            self.see_pos = target_pos 
-            
+            self.see_pos = target_pos
+
             if see_value == self.feature_goal:
-                reward = 1.0
+                reward = self.goal_reward
                 terminated = True
-                
-                
+
         if self.current_step >= self.max_steps:
             truncated = True
-            
-        return self._get_obs(), reward, terminated, truncated, {}
-    
+
+        return self._get_obs(), float(reward), bool(terminated), bool(truncated), {}
+
     def render(self):
-        
-        """Отображает текущее состояние среды.
-
-        Использует matplotlib для визуализации сетки, агента, препятствий и цели.
-        Поддерживает режим 'human' для отображения в окне.
-
-        Note:
-            Для режима 'rgb_array' необходимо реализовать дополнительную логику
-            получения массива пикселей.
-
-        Example:
-        
-            >>> env = GridWorldEnv(render_mode='human')
-            >>> obs, _ = env.reset()
-            >>> env.render()  # Покажет окно с сеткой
-            >>> env.close()
-        """
         if self.render_mode == "human":
             self.render_map()
 
     def render_map(self):
-        
-        """Визуализирует сетку с помощью matplotlib.
-
-        Отображает:
-        - Сетку с разными типами клеток
-        - Позицию агента (золотая звезда)
-        - Легенду с цветами
-
-        Color Palette:
-            - Пол (0 до n_colors-1): Цвета из colormap 'Set3'
-            - Стена: чёрный
-            - Препятствие: красный ('firebrick')
-            - Цель: зелёный ('green')
-
-        Grid Lines:
-            Проводятся по границам клеток для лучшей видимости.
-
-        Example:
-        
-            >>> env = GridWorldEnv(n_colors=3, render_mode='human')
-            >>> env.reset(seed=1)
-            >>> env.render_map()  # Откроется окно с визуализацией
-        """
-        
         if plt.get_fignums():
             plt.clf()
             fig = plt.gcf()
         else:
             fig = plt.figure(figsize=(9, 7))
-        
         ax = plt.gca()
 
         base_cmap = plt.get_cmap('Set3')
-        
-        palette_colors = []
-        for i in range(self.n_colors):
-            palette_colors.append(base_cmap(i % 12))
-            
+
+        palette_colors = [base_cmap(i % base_cmap.N) for i in range(self.n_colors)]
         palette_colors.append("black")       # Стена
         palette_colors.append("firebrick")   # Препятствие
         palette_colors.append("green")       # Цель
-        
+
         my_cmap = colors.ListedColormap(palette_colors)
-        
         max_val = self.feature_goal
         bounds = np.arange(-0.5, max_val + 1.5, 1)
         norm = colors.BoundaryNorm(bounds, my_cmap.N)
@@ -557,21 +336,31 @@ class GridWorldEnv(gym.Env):
         ax.imshow(self.grid, cmap=my_cmap, norm=norm, origin='upper')
 
         ay, ax_coord = self.agent_pos
-        ax.scatter(ax_coord, ay, c='gold', s=400, marker='*', 
-                   label='Agent', edgecolors='black', zorder=10)
+        ax.scatter(
+            ax_coord,
+            ay,
+            c='gold',
+            s=400,
+            marker='*',
+            label='Agent',
+            edgecolors='black',
+            zorder=10,
+        )
 
         ax.set_xticks(np.arange(-0.5, self.w + 2, 1))
         ax.set_yticks(np.arange(-0.5, self.h + 2, 1))
         ax.grid(which='major', color='gray', linestyle='-', linewidth=2)
-        
-        ax.tick_params(axis='both', bottom=False, left=False, 
-                       labelbottom=False, labelleft=False)
+        ax.tick_params(
+            axis='both',
+            bottom=False,
+            left=False,
+            labelbottom=False,
+            labelleft=False,
+        )
 
         patches = [mpatches.Patch(color='gold', label='Agent')]
-        
         for i in range(self.n_colors):
             patches.append(mpatches.Patch(color=palette_colors[i], label=f'Floor {i}'))
-            
         patches.append(mpatches.Patch(color='black', label='Wall'))
         patches.append(mpatches.Patch(color='firebrick', label='Obstacle'))
         patches.append(mpatches.Patch(color='limegreen', label='Goal'))

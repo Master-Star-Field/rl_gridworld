@@ -21,8 +21,8 @@ nav:
       - Среды: envs.md
       - Агенты: agents.md
       - Вспомогательные функции: utils.md
+      - Результаты: results.md
 
-# Плагины
 plugins:
   - search
   - mkdocstrings:
@@ -34,6 +34,9 @@ plugins:
             docstring_style: google
             show_source: true
             show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+            separate_signature: true
 
 # Расширения Markdown
 markdown_extensions:

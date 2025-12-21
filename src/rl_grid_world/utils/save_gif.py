@@ -1,8 +1,9 @@
-import imageio
 import numpy as np
 import torch
 import matplotlib
 import matplotlib.pyplot as plt
+import imageio
+from typing import Optional
 
 
 def save_episode_gif(
@@ -12,24 +13,13 @@ def save_episode_gif(
     fps: int = 2,
     max_frames: int = 200,
     hold_last: int = 10,
-):
+) -> bool:
     """
-    Сохраняет GIF одного эпизода без открытия интерактивного окна.
+    Сохраняет GIF одного эпизода
 
-    Параметры
-    ---------
-    env : GridWorldEnv
-        Среда, в которой будет проигран эпизод.
-    model : LightningModule с атрибутом `q_net`
-        Обученный DRQN‑агент.
-    filename : str
-        Имя файла для сохранения GIF.
-    fps : int
-        Частота кадров.
-    max_frames : int
-        Максимальное количество шагов в эпизоде.
-    hold_last : int
-        Сколько раз продублировать последний кадр, если агент достиг цели.
+    Возвращает:
+      True  — если в эпизоде хотя бы раз был terminated=True,
+      False — иначе (сохранён будет последний эпизод).
     """
     print(f"Начинаем запись GIF в файл: {filename}...")
 
@@ -37,60 +27,157 @@ def save_episode_gif(
     plt.switch_backend("Agg")
 
     frames = []
-    model.eval()
-    device = next(model.parameters()).device
+    use_agent = False
+    agent = None
+    net = None
 
+    if hasattr(model, "act_greedy"):
+        agent = model
+        device = getattr(model, "device", torch.device("cpu"))
+        use_agent = True
+    elif hasattr(model, "net"):
+        agent = model
+        net = agent.net
+        device = agent.device
+    else:
+        agent = None
+        net = model
+        device = next(net.parameters()).device
 
-    state, _ = env.reset()
-    done = False
-    terminated_flag = False
-
-    hidden = None
-    last_action = None
-    last_reward = 0.0
-    n_actions = env.action_space.n
-
-    frame_count = 0
+    if net is not None:
+        net.eval()
 
     def render_frame():
-        """Рендер текущего состояния среды в numpy‑картинку и добавление в frames."""
-        env.render_map()
-        fig = plt.gcf()
-        fig.canvas.draw()
+        # Векторная среда
+        if hasattr(env, "_render_map"):
+            img = env._render_map(return_rgb_array=True)
+            if img is not None:
+                frames.append(img)
+            return
 
-        image = np.asarray(fig.canvas.buffer_rgba(), dtype=np.uint8)[..., :3]
-        frames.append(image)
-        plt.close(fig)
+        # Обычная GridWorldEnv
+        if hasattr(env, "render_map"):
+            env.render_map()
+            fig = plt.gcf()
+            fig.canvas.draw()
+            buf = fig.canvas.buffer_rgba()
+            image = np.asarray(buf, dtype=np.uint8)[..., :3]
+            frames.append(image)
+            plt.close(fig)
+            return
+
+        if hasattr(env, "render"):
+            out = env.render()
+            if isinstance(out, np.ndarray):
+                frames.append(out)
+            else:
+                fig = plt.gcf()
+                fig.canvas.draw()
+                buf = fig.canvas.buffer_rgba()
+                image = np.asarray(buf, dtype=np.uint8)[..., :3]
+                frames.append(image)
+                plt.close(fig)
+            return
+
+        raise AttributeError(
+            "Среда не поддерживает ни _render_map(), ни render_map(), ни render()."
+        )
 
     try:
+        full_obs, _ = env.reset()
+        obs = np.asarray(full_obs, dtype=np.float32)
+
+        if obs.ndim == 1:
+            n_envs = 1
+        elif obs.ndim == 2:
+            n_envs = obs.shape[0]
+        else:
+            raise ValueError(
+                f"save_episode_gif: ожидалось obs.ndim 1 или 2, получили {obs.ndim}"
+            )
+
+        done_vec = np.zeros(n_envs, dtype=bool)
+        terminated_flag = False
+
+        hidden = None
+        frame_count = 0
+
         render_frame()
         frame_count += 1
 
-        while not done and frame_count < max_frames:
-            action_one_hot = np.zeros(n_actions, dtype=np.float32)
-            if last_action is not None:
-                action_one_hot[last_action] = 1.0
+        while (not done_vec.all()) and frame_count < max_frames:
+            if use_agent:
+                try:
+                    action, hidden = agent.act_greedy(obs, hidden=hidden, env=env)
+                except TypeError:
+                    action, hidden = agent.act_greedy(obs, hidden=hidden)
+            else:
+                obs_np = np.asarray(obs, dtype=np.float32)
+                if obs_np.ndim == 1:
+                    B = 1
+                    obs_batch = obs_np.reshape(1, -1)
+                elif obs_np.ndim == 2:
+                    B = obs_np.shape[0]
+                    obs_batch = obs_np
+                else:
+                    raise ValueError(
+                        f"save_episode_gif: ожидалось obs.ndim 1 или 2, получили {obs_np.ndim}"
+                    )
 
-            full_input = np.concatenate(
-                [state.astype(np.float32), action_one_hot, np.array([last_reward], dtype=np.float32)]
-            )  # размер = obs_dim + n_actions + 1
+                if hasattr(net, "init_hidden"):
+                    if hidden is None or hidden[0].shape[1] != B:
+                        hidden = net.init_hidden(batch_size=B, device=device)
 
-            input_t = torch.from_numpy(full_input).float().view(1, 1, -1).to(device)
+                obs_t = torch.from_numpy(obs_batch).float().to(device)
 
-            if hidden is None:
-                hidden = model.q_net.get_initial_state(batch_size=1, device=device)
+                with torch.no_grad():
+                    if hidden is not None:
+                        out = net(obs_t, hidden)
+                    else:
+                        out = net(obs_t)
 
-            with torch.no_grad():
-                q_values, hidden = model.q_net(input_t, hidden)
-                action = int(q_values.argmax(dim=2).item())
+                    if isinstance(out, tuple) and len(out) == 3:
+                        logits, value, hidden = out
+                    elif isinstance(out, tuple) and len(out) == 2:
+                        logits, hidden = out
+                        value = None
+                    else:
+                        logits = out
+                        value = None
+                        hidden = None
 
-            next_state, reward, terminated, truncated, _ = env.step(action)
-            done = terminated or truncated
-            terminated_flag = bool(terminated)
+                    actions_tensor = torch.argmax(logits, dim=-1)  # (B,)
 
-            state = next_state
-            last_action = action
-            last_reward = reward
+                actions_np = actions_tensor.cpu().numpy().astype(int)
+                if B == 1:
+                    action = int(actions_np[0])
+                else:
+                    action = actions_np
+
+            full_next_obs, reward, terminated, truncated, _ = env.step(action)
+            obs = np.asarray(full_next_obs, dtype=np.float32)
+
+            term = np.asarray(terminated)
+            trunc = np.asarray(truncated)
+
+            if term.ndim == 0:
+                term = term.reshape(1)
+            if trunc.ndim == 0:
+                trunc = trunc.reshape(1)
+
+            step_done = np.logical_or(term.astype(bool), trunc.astype(bool))
+
+            if step_done.shape[0] != done_vec.shape[0]:
+                if step_done.shape[0] == 1 and done_vec.shape[0] == 1:
+                    pass
+                else:
+                    raise ValueError(
+                        f"Ожидалась длина done_vec={done_vec.shape[0]}, "
+                        f"но пришёл step_done.shape={step_done.shape}"
+                    )
+
+            done_vec = np.logical_or(done_vec, step_done)
+            terminated_flag = terminated_flag or bool(term.any())
 
             render_frame()
             frame_count += 1
@@ -98,20 +185,24 @@ def save_episode_gif(
             if frame_count % 20 == 0:
                 print(f"Обработано кадров: {frame_count}")
 
-        # Если агент действительно достиг цели — держим последний кадр подольше
         if terminated_flag and len(frames) > 0 and hold_last > 1:
             last_frame = frames[-1]
             for _ in range(hold_last - 1):
                 frames.append(last_frame.copy())
 
         if len(frames) > 0:
-            imageio.mimsave(filename, frames, fps=fps, loop=0)
+            imageio.mimsave(filename, frames, fps=fps, loop=1)
             print(f"Успешно сохранено: {filename} ({len(frames)} кадров)")
+            return bool(terminated_flag)
         else:
             print("Ошибка: не удалось записать ни одного кадра.")
+            raise RuntimeError("save_episode_gif: список frames пуст.")
 
     except Exception as e:
         print(f"Критическая ошибка при записи GIF: {e}")
+        raise
 
     finally:
         plt.switch_backend(prev_backend)
+        if net is not None:
+            net.train()
