@@ -1,105 +1,80 @@
-# GridWorld Environment
+# RL Grid World Project
 
-Среда GridWorld для задач обучения с подкреплением, реализованная на основе Gymnasium.
+Проект для исследования и обучения RL-агентов (A2C, DRQN) в различных сеточных средах (GridWorld, MNIST). Для управления зависимостями и запуска используется **uv**.
 
 ## Установка
 
-Для установки среды и всех зависимостей выполните следующие команды:
+1. **Установите uv** (если не установлен):
 
-```shell
-cd rl-grid-world  # Перейдите в корень проекта
-pip install uv
-uv pip install -e .
+   ```bash
+   pip install uv
+   ```
 
+2. Синхронизируйте окружение:
+
+Эта команда создаст виртуальное окружение и установит все зависимости (PyTorch, Gymnasium, WandB и др.).
+
+   ```bash
+   uv sync
+   ```
+
+3. Авторизация в WandB:
+Проект активно использует логирование метрик в Weights & Biases.
+
+
+   ```bash
+   uv run wandb login
+   ```
+
+4. Автоматический запуск (Experiment Suite)
+
+Для запуска серии экспериментов (GridSearch по сценариям, алгоритмам и типам сред) используйте скрипт auto_runs.py.
+
+Этот скрипт автоматически перебирает сценарии сложности (s1...s4), алгоритмы (a2c, drqn) и настройки среды.
+
+Команда запуска:
+
+```bash
+uv run python -m src.rl_grid_world.auto_runs
 ```
 
 
-
-## Примеры использования
-
-### Базовый пример
-
-```python
-import gymnasium as gym
-from rl_grid_world.envs import GridWorldEnv
-
-# Создание среды
-env = GridWorldEnv(
-    h=5,
-    w=5,
-    n_colors=2,
-    pos_goal=(4, 4),
-    pos_agent=(1, 1),
-    see_obstacle=True,
-    render_mode="human"
-)
+ * Инициализирует эксперименты согласно списку SCENARIOS.
+* Запускает обучение (вызывая функции из train.py напрямую).
+* Логирует прогресс в проект gridworld_experiment2 на WandB.
+* Сохраняет GIF-анимации валидации и чекпоинты моделей.
+* В конце выводит чек-лист со статусом выполнения каждого запуска.
 
 
-obs, info = env.reset(seed=42)
+5. Ручной запуск (Single Run)
 
-for _ in range(20):
-    action = env.action_space.sample() 
-    obs, reward, terminated, truncated, info = env.step(action)
-    
-    if terminated or truncated:
-        obs, info = env.reset()
-    
-    env.render()
+Для запуска одиночного эксперимента с конкретными параметрами используйте модуль train.py.
 
-env.close()
+Пример команды (DRQN на векторизованной среде):
+
+```bash
+uv run python -m src.rl_grid_world.train \
+  --name "drqn_test" \
+  --algo drqn \
+  --env_type gym_vec \
+  --h 10 --w 10 \
+  --obstacle_ratio 0.1 \
+  --max_steps 20000 \
+  --see_obstacle
 ```
 
-### Пример с препятствиями
+Основные аргументы CLI:
 
-```python
-import numpy as np
-
-obstacle_mask = np.array([
-    [False, True,  False, False, False],
-    [False, True,  False, True,  False],
-    [False, False, False, True,  False],
-    [True,  False, False, False, False],
-    [False, False, False, False, False]
-])
-
-env = GridWorldEnv(
-    h=5,
-    w=5,
-    obstacle_mask=obstacle_mask,
-    pos_goal=(4, 4),
-    pos_agent=(1, 1),
-    render_mode="human"
-)
-
-obs, info = env.reset(seed=42)
-```
-
-### Пример со случайной начальной позицией
-
-```python
-start_probs = np.ones((5, 5))
-start_probs[0, :] = 0  
-start_probs[:, 0] = 0  
-
-env = GridWorldEnv(
-    h=5,
-    w=5,
-    pos_agent=start_probs  
-)
-
-obs, info = env.reset(seed=42)  
-print(f"Начальная позиция: {env.agent_pos}")
-```
-
-## Запуск примеров
-
-Примеры скрипта доступен в файле /test.py:
-
-```shell
-uv run python -m src.examples.test
-```
-
-## Документация
-
-Доступна по ссылке прикрепленной к репозиторию.
-
+* --algo: Алгоритм обучения: a2c или drqn.
+* --env_type: Тип среды:
+        onehot: Классическая сетка (наблюдение = one-hot вектор позиции).
+        mnist: Сетка, где клетки представлены изображениями цифр MNIST.
+        gym_vec: Векторизованная среда на базе gymnasium.vector.
+        np_vec: Оптимизированная Numpy-векторизованная среда.
+* --h, --w: Размеры сетки (высота и ширина).
+    --obstacle_ratio: Доля препятствий (от 0.0 до 1.0).
+*  --see_obstacle: Флаг. Если указан, агент получает информацию о стенах в векторе наблюдения.
+*  --episodes: Количество эпизодов обучения (только для A2C).
+*  --max_steps: Количество шагов среды (только для DRQN).
+*  --step_reward: Награда за каждый шаг (обычно отрицательная или 0).
+*  --no-wandb: Отключить логирование в WandB.

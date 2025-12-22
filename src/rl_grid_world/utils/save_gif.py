@@ -15,11 +15,63 @@ def save_episode_gif(
     hold_last: int = 10,
 ) -> bool:
     """
-    Сохраняет GIF одного эпизода
+    Сохраняет GIF одного эпизода, визуализируя поведение агента в среде `env` с использованием политики из `model`.
+
+    Функция пошагово выполняет эпизод, делая шаги в среде на основе действий, предсказанных моделью,
+    и сохраняет каждый кадр в анимированное GIF-изображение. Поддерживаются как обычные,
+    так и векторизованные среды (несколько параллельных сред), а также модели с рекуррентными
+    архитектурами (например, LSTMs/GRUs), если они реализуют метод `init_hidden`.
+
+    Поддерживаемые типы моделей:
+    - Модели с методом `act_greedy` (например, агенты).
+    - Модели с атрибутом `net` (например, `DQNAgent`).
+    - "Чистые" PyTorch-модели, выводящие логиты действий.
+
+    Поддерживаемые типы сред:
+    - `GridWorldEnv` с методом `render_map()`.
+    - Векторизованные среды с `_render_map(return_rgb_array=True)`.
+    - Любые среды, реализующие `render()` и возвращающие массив изображения или отрисовывающие на `plt`.
+
+    Аргументы:
+        env: Среда Gym/Gymnasium. Должна поддерживать `reset()` и `step()`. Для визуализации — один из:
+             `_render_map`, `render_map`, `render`.
+        model: Модель или агент, способный предсказывать действия. Может быть:
+             - Объект с `act_greedy`
+             - Объект с `.net` и `.device`
+             - PyTorch-модель, чей forward возвращает логиты.
+        filename (str): Имя файла для сохранения GIF (по умолчанию "episode.gif").
+        fps (int): Частота кадров в GIF (по умолчанию 2 кадра в секунду).
+        max_frames (int): Максимальное количество кадров в эпизоде (защита от бесконечных циклов).
+        hold_last (int): Сколько раз продублировать последний кадр, чтобы замедлить финальный кадр.
+                         Используется только если эпизод завершился по `terminated`.
 
     Возвращает:
-      True  — если в эпизоде хотя бы раз был terminated=True,
-      False — иначе (сохранён будет последний эпизод).
+        bool: `True`, если хотя бы одно состояние `terminated=True` было встретено (успех).
+              `False`, если эпизод завершился по `truncated` или `max_frames`.
+
+    Исключения:
+        RuntimeError: Если не удалось создать ни одного кадра.
+        AttributeError: Если среда не поддерживает ни один из методов визуализации.
+        ValueError: Если размерности наблюдений не соответствуют ожидаемым.
+
+    !!! note "Примечание"
+        Функция временно переключает бэкенд Matplotlib на `Agg` для безголовой отрисовки,
+        затем восстанавливает оригинальный бэкенд.
+
+    !!! tip "Совет"
+        Для отладки поведения агента используйте низкий `fps`. Для демонстраций — `hold_last > 1`.
+
+    Пример:
+        ```python
+        agent = DQNAgent(env.observation_space, env.action_space)
+        agent.load("dqn_final.pth")
+        success = save_episode_gif(env, agent, filename="demo.gif", fps=5, hold_last=15)
+        print("Эпизод успешен:" , success)
+        ```
+
+    !!! warning "Внимание"
+        Убедитесь, что все визуализационные зависимости установлены (`matplotlib`, `imageio`).
+        В headless-режиме (сервер) только `Agg` бэкенд работает корректно.
     """
     print(f"Начинаем запись GIF в файл: {filename}...")
 
@@ -31,10 +83,12 @@ def save_episode_gif(
     agent = None
     net = None
 
+
     if hasattr(model, "act_greedy"):
         agent = model
         device = getattr(model, "device", torch.device("cpu"))
         use_agent = True
+
     elif hasattr(model, "net"):
         agent = model
         net = agent.net
@@ -45,17 +99,15 @@ def save_episode_gif(
         device = next(net.parameters()).device
 
     if net is not None:
-        net.eval()
+        net.eval() 
 
     def render_frame():
-        # Векторная среда
         if hasattr(env, "_render_map"):
             img = env._render_map(return_rgb_array=True)
             if img is not None:
                 frames.append(img)
             return
 
-        # Обычная GridWorldEnv
         if hasattr(env, "render_map"):
             env.render_map()
             fig = plt.gcf()
@@ -88,15 +140,15 @@ def save_episode_gif(
         obs = np.asarray(full_obs, dtype=np.float32)
 
         if obs.ndim == 1:
-            n_envs = 1
+            n_envs = 1  
         elif obs.ndim == 2:
-            n_envs = obs.shape[0]
+            n_envs = obs.shape[0]  
         else:
             raise ValueError(
                 f"save_episode_gif: ожидалось obs.ndim 1 или 2, получили {obs.ndim}"
             )
 
-        done_vec = np.zeros(n_envs, dtype=bool)
+        done_vec = np.zeros(n_envs, dtype=bool)  
         terminated_flag = False
 
         hidden = None
@@ -169,7 +221,7 @@ def save_episode_gif(
 
             if step_done.shape[0] != done_vec.shape[0]:
                 if step_done.shape[0] == 1 and done_vec.shape[0] == 1:
-                    pass
+                    pass 
                 else:
                     raise ValueError(
                         f"Ожидалась длина done_vec={done_vec.shape[0]}, "
@@ -205,4 +257,4 @@ def save_episode_gif(
     finally:
         plt.switch_backend(prev_backend)
         if net is not None:
-            net.train()
+            net.train() 

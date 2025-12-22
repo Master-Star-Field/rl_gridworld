@@ -282,13 +282,18 @@ def build_envs(
         goal=(h - 1, w - 1),
     )
 
+
+    start_probs = np.zeros((h, w), dtype=np.float32)
+    max_start_col = min(2, w)  
+    start_probs[:, :max_start_col] = 1.0
+    
     common_env_kwargs = dict(
         h=h,
         w=w,
         n_colors=n_colors,
         obstacle_mask=obstacle_mask,
         pos_goal=(h - 1, w - 1),
-        pos_agent=np.ones((h, w)),
+        pos_agent=start_probs,
         see_obstacle=see_obstacle,
         step_reward=step_reward,
     )
@@ -326,31 +331,35 @@ def build_envs(
         )
 
     elif env_type == "gym_vec":
+        map_seed = seed
+
         train_env = GymVectorGridWorldEnv(
             n_envs=n_envs_train,
-            make_env_kwargs=common_env_kwargs, 
-            base_seed=seed,
+            make_env_kwargs=common_env_kwargs,
+            base_seed=map_seed,
             render_mode=None,
         )
         eval_env = GymVectorGridWorldEnv(
             n_envs=n_envs_eval,
             make_env_kwargs=common_env_kwargs,
-            base_seed=seed + 1000,
+            base_seed=map_seed,
             render_mode=None,
         )
 
     elif env_type == "np_vec":
+        map_seed = seed
+
         train_env = VectorGridWorldEnv(
             **common_env_kwargs,
             render_mode=None,
             n_envs=n_envs_train,
-            seed=seed,
+            seed=map_seed,
         )
         eval_env = VectorGridWorldEnv(
             **common_env_kwargs,
             render_mode=None,
             n_envs=n_envs_eval,
-            seed=seed + 1000,
+            seed=map_seed,
         )
 
     else:

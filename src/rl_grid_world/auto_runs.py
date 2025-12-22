@@ -205,6 +205,7 @@ def run_suite(
                             )
 
                             if algo == "a2c":
+                                project_name = f"{project}_a2c"
                                 cfg = A2CConfig(
                                     gamma=0.99,
                                     lr=1e-3,
@@ -228,6 +229,7 @@ def run_suite(
                                 )
 
                             else:  # DRQN
+                                project_name = f"{project}_drqn"
                                 train_drqn_gridworld(
                                     env=train_env,
                                     max_steps=max_steps_drqn,
@@ -284,4 +286,4 @@ def run_suite(
             print(f"     cmd:   {r['cli']}")
 
 if __name__ == "__main__":
-    run_suite(project="gridworld_experiment1", n_envs_train=50, n_envs_eval=1)
+    run_suite(project="gridworld_experiment2", n_envs_train=20, n_envs_eval=1)

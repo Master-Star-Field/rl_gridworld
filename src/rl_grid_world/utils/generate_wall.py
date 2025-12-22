@@ -45,8 +45,14 @@ def generate_walls(
         Булева матрица формы '(h, w)', где 'True' — препятствие.
     """
     if rng is None:
-        rng = np.random.default_rng()
-
+        seed_seq = np.random.SeedSequence(
+            [
+                int(h),
+                int(w),
+                int(round(obstacle_ratio * 10_000)),
+            ]
+        )
+        rng = np.random.default_rng(seed_seq)
     if not (0.0 <= obstacle_ratio <= 1.0):
         raise ValueError("obstacle_ratio должно быть в диапазоне [0.0, 1.0].")
 

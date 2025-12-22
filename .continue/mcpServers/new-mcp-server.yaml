@@ -1,0 +1,12 @@
+name: Typst MCP
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: typst-mcp
+    command: uv
+    args:
+      - "run"
+      - "--with"
+      - "git+https://github.com/FujishigeTemma/typst-mcp"
+      - "typst-mcp"
+      - "serve"
