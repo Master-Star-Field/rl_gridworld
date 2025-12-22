@@ -77,7 +77,17 @@ class VectorGridWorldEnv(gym.Env):
         self.see_obstacle = bool(see_obstacle)
         self.render_mode = render_mode
 
-        self.seed = seed
+        # ======= ИСПРАВЛЕНИЕ: фиксируем seed карты при создании среды =======
+        # Если seed не передан, генерируем случайный seed ОДИН РАЗ
+        # и используем его для всех последующих reset()
+        if seed is None:
+            self._map_seed = np.random.randint(0, 2**31 - 1)
+        else:
+            self._map_seed = int(seed)
+        
+        # Сохраняем также для совместимости (если где-то читается self.seed)
+        self.seed = self._map_seed
+        # ====================================================================
 
         # shaping‑параметры награды
         self.step_reward = float(step_reward)
@@ -136,19 +146,21 @@ class VectorGridWorldEnv(gym.Env):
             dtype=int,
         )
 
-    def _init_grid(self, seed: Optional[int]) -> None:
-        """
-        Инициализация всех сеток:
-        - стены по периметру,
-        - СЛУЧАЙНЫЕ типы пола внутри (одна карта), далее переносим на все envs,
-        - препятствия по obstacle_mask,
-        - цель в pos_goal для каждой из n_envs.
-        """
-        grid_seed = self.seed if self.seed is not None else seed
-        rng = np.random.default_rng(grid_seed)
+        # ======= ИСПРАВЛЕНИЕ: генерируем карту ОДИН РАЗ при создании =======
+        # Это гарантирует, что карта (цвета пола, препятствия) идентична
+        # для всех под-сред и не меняется при reset()
+        self._cached_inner_area = None
+        self._generate_map_once()
+        # ====================================================================
 
-        self.grid.fill(self.feature_wall)
+    def _generate_map_once(self) -> None:
+        """
+        Генерирует карту (цвета пола + препятствия) ОДИН РАЗ
+        и кэширует её для использования во всех reset().
+        """
+        rng = np.random.default_rng(self._map_seed)
 
+        # Генерируем случайные цвета пола для ОДНОЙ карты
         random_floors_single = rng.integers(
             low=0,
             high=self.n_colors,
@@ -156,16 +168,39 @@ class VectorGridWorldEnv(gym.Env):
             dtype=int,
         )
 
+        # Накладываем препятствия
         inner_single = np.where(
             self.obstacle_mask,
             self.feature_obstacle,
             random_floors_single,
         )  # (h, w)
 
-        inner_area = np.broadcast_to(inner_single, (self.n_envs, self.h, self.w))
+        # Кэшируем для повторного использования
+        self._cached_inner_area = inner_single.copy()
+
+    def _init_grid(self, seed: Optional[int] = None) -> None:
+        """
+        Инициализация всех сеток:
+        - стены по периметру,
+        - копируем закэшированную карту (цвета + препятствия) на все envs,
+        - цель в pos_goal для каждой из n_envs.
+        
+        ВАЖНО: карта (цвета пола, препятствия) НЕ перегенерируется,
+        используется закэшированная версия из _generate_map_once().
+        """
+        # Заполняем всё стенами
+        self.grid.fill(self.feature_wall)
+
+        # Используем закэшированную карту для всех под-сред
+        # broadcast_to создаёт view, присвоение сделает копию
+        inner_area = np.broadcast_to(
+            self._cached_inner_area, 
+            (self.n_envs, self.h, self.w)
+        )
 
         self.grid[:, 1:-1, 1:-1] = inner_area
 
+        # Устанавливаем цель
         goal_r, goal_c = (self.pos_goal + 1).astype(int)
         env_idx = np.arange(self.n_envs, dtype=int)
         self.grid[env_idx, goal_r, goal_c] = self.feature_goal
@@ -235,6 +270,10 @@ class VectorGridWorldEnv(gym.Env):
     def reset(self, seed: Optional[int] = None, options=None):
         """
         Сбрасывает ВСЕ n_envs копий среды.
+        
+        ВАЖНО: карта (цвета пола, препятствия) НЕ перегенерируется при reset().
+        Используется закэшированная карта, созданная при инициализации среды.
+        Это гарантирует, что все эпизоды проходят на идентичной карте.
 
         Возвращает:
           obs:  np.ndarray shape (n_envs, single_obs_dim)
@@ -242,6 +281,7 @@ class VectorGridWorldEnv(gym.Env):
         """
         super().reset(seed=seed)
 
+        # _init_grid использует закэшированную карту, не перегенерирует её
         self._init_grid(seed)
         self.steps[:] = 0
         self.done[:] = False

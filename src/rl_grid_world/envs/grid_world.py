@@ -107,7 +107,7 @@ class GridWorldEnv(gym.Env):
         see_obstacle: bool = True,
         render_mode: Optional[str] = None,
         seed: Optional[int] = None,
-        step_reward: float = 0.0,
+        step_reward: float = -0.01,
         goal_reward: float = 1.0,
     ):
         super().__init__()
@@ -160,16 +160,16 @@ class GridWorldEnv(gym.Env):
 
         self.current_step = 0
 
-    def _init_grid(self, seed: Optional[int]):
-        r"""Инициализирует внутреннюю сетку среды.
+        # === ИСПРАВЛЕНИЕ: сохраняем базовую карту ===
+        self._base_grid: Optional[np.ndarray] = None
+        self._grid_seed_used: Optional[int] = None
 
-        1. Вся сетка заполняется стенами (значение = feature_wall)
-        2. Внутренняя область (h×w) заполняется случайными типами пола
-           или препятствиями в соответствии с obstacle_mask
-        3. Клетка цели устанавливается в заданной позиции
-        """
+        # Если seed задан при создании, сразу генерируем и сохраняем карту
+        if self.seed is not None:
+            self._generate_and_save_grid(self.seed)
 
-        grid_seed = self.seed if self.seed is not None else seed
+    def _generate_and_save_grid(self, grid_seed: int) -> None:
+        """Генерирует карту один раз и сохраняет её как базовую."""
         rng = np.random.default_rng(grid_seed)
 
         self.grid.fill(self.feature_wall)
@@ -192,6 +192,33 @@ class GridWorldEnv(gym.Env):
         goal_r, goal_c = (self.pos_goal + 1).astype(int)
         self.grid[goal_r, goal_c] = self.feature_goal
 
+        # Сохраняем карту
+        self._base_grid = self.grid.copy()
+        self._grid_seed_used = grid_seed
+
+    def _init_grid(self, seed: Optional[int]) -> None:
+        r"""Инициализирует внутреннюю сетку среды.
+
+        Если карта уже была сгенерирована и сохранена, восстанавливает её.
+        Иначе генерирует новую карту и сохраняет.
+        """
+        # Определяем seed для карты
+        grid_seed = self.seed if self.seed is not None else seed
+
+        # Если карта уже сохранена и seed совпадает (или self.seed зафиксирован),
+        # просто восстанавливаем
+        if self._base_grid is not None:
+            if self.seed is not None or grid_seed == self._grid_seed_used:
+                self.grid[:] = self._base_grid
+                return
+
+        # Если seed не задан ни в конструкторе, ни в reset, генерируем случайный
+        if grid_seed is None:
+            grid_seed = np.random.randint(0, 2**31 - 1)
+
+        # Генерируем и сохраняем карту
+        self._generate_and_save_grid(grid_seed)
+
     def _get_obs(self) -> np.ndarray:
         r"""Возвращает наблюдение агента в виде one-hot вектора."""
         obs_vec = np.zeros((self.feature_goal + 1,), dtype=np.float32)
@@ -205,7 +232,7 @@ class GridWorldEnv(gym.Env):
 
         seed:
           - передаётся в super().reset(seed=seed) → инициализирует self.np_random;
-          - используется в _init_grid ТОЛЬКО если self.seed is None.
+          - используется в _init_grid ТОЛЬКО если self.seed is None и карта ещё не сохранена.
 
         Возвращает:
           obs:  np.ndarray shape (obs_dim,)

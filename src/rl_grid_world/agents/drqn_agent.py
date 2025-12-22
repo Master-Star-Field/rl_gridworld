@@ -128,12 +128,17 @@ class EpisodeReplayBuffer:
         )
 
 
-class DummyDataset(IterableDataset):
-    """Бесконечный датасет, чтобы Lightning вызывал training_step."""
+class DummyDataset(torch.utils.data.Dataset):
+    """Датасет фиксированной длины для корректного отображения прогресса в Lightning."""
 
-    def __iter__(self):
-        while True:
-            yield torch.tensor(0, dtype=torch.int64)
+    def __init__(self, length: int):
+        self.length = length
+
+    def __len__(self) -> int:
+        return self.length
+
+    def __getitem__(self, idx: int) -> torch.Tensor:
+        return torch.tensor(0, dtype=torch.int64)
 
 
 class DRQNLightning(pl.LightningModule):
@@ -180,13 +185,15 @@ class DRQNLightning(pl.LightningModule):
         early_stop_threshold: float = 0.95,
         early_stop_min_episodes: int = 200,
         early_stop_patience: int = 20,
+        max_steps: int = 20000
+
     ) -> None:
         super().__init__()
         self.save_hyperparameters(ignore=["env"])
 
         self.automatic_optimization = False
         self.env = env
-
+        self.max_steps = max_steps
         obs, _ = self.env.reset()
         obs_arr = np.asarray(obs, dtype=np.float32)
 
@@ -308,8 +315,11 @@ class DRQNLightning(pl.LightningModule):
         return optimizer
 
     def train_dataloader(self) -> DataLoader:
-        return DataLoader(DummyDataset(), batch_size=1, num_workers=0)
-
+        return DataLoader(
+            DummyDataset(self.max_steps), 
+            batch_size=1, 
+            num_workers=0
+        )
 
     def training_step(self, batch: torch.Tensor, batch_idx: int):
         opt = self.optimizers()

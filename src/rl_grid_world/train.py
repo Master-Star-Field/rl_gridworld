@@ -139,7 +139,7 @@ def train_a2c_gridworld(
 
 def train_drqn_gridworld(
     env: gym.Env,
-    max_steps: int = 50_000,
+    max_steps: int = 5000,
     project: str = "gridworld_drqn",
     run_name: Optional[str] = None,
     gif_path: Optional[str] = "drqn_eval_episode.gif",
@@ -154,7 +154,7 @@ def train_drqn_gridworld(
     agent_kwargs.setdefault("early_stop_min_episodes", 400)
     agent_kwargs.setdefault("early_stop_patience", 250)
 
-    model = DRQNLightning(env=env, **agent_kwargs)
+    model = DRQNLightning(env=env, max_steps=max_steps, **agent_kwargs)
 
     wandb_logger = None
     if use_wandb:
@@ -263,7 +263,7 @@ def build_envs(
     n_envs_train: int,
     n_envs_eval: int,
     see_obstacle: bool,
-    step_reward: float = 0.0,   # <-- добавлен default
+    step_reward: float = -0.01,
 ):
     """
       1) "onehot"   : обычная GridWorldEnv с one-hot наблюдениями.
@@ -386,7 +386,7 @@ def main():
     parser.add_argument("--h", type=int, default=10, help="Высота поля")
     parser.add_argument("--w", type=int, default=10, help="Ширина поля")
     parser.add_argument("--episodes", type=int, default=2000, help="Число эпизодов (для A2C)")
-    parser.add_argument("--obstacle_ratio", type=float, default=0.1, help="Доля препятствий")
+    parser.add_argument("--obstacle_ratio", type=float, default=0, help="Доля препятствий")
     parser.add_argument("--n_colors", type=int, default=4, help="Количество цветов пола")
     parser.add_argument("--seed", type=int, default=111, help="Seed для карты пола/старта")
     parser.add_argument("--see_obstacle",  action="store_true", help="Видит ли препятствия")
@@ -394,7 +394,7 @@ def main():
     parser.add_argument(
         "--step_reward",
         type=float,
-        default=0.0,
+        default=-0.01,
         help="Награда/штраф за шаг (например, -0.01, чтобы ускорить достижение цели)",
     )
 
@@ -414,7 +414,7 @@ def main():
     parser.add_argument("--n_envs_train", type=int, default=16, help="Число под-сред при обучении (vector env)")
     parser.add_argument("--n_envs_eval", type=int, default=2, help="Число под-сред при оценке (vector env)")
 
-    parser.add_argument("--max_steps", type=int, default=50_000, help="max_steps для DRQN (Trainer)")
+    parser.add_argument("--max_steps", type=int, default=20000, help="max_steps для DRQN (Trainer)")
 
     args = parser.parse_args()
 
@@ -446,21 +446,21 @@ def main():
         cfg = A2CConfig(
             gamma=0.99,
             lr=1e-3,
-            entropy_coef=0.01,
+            entropy_coef=0.08,
             value_coef=0.5,
             max_grad_norm=0.5,
             num_episodes=args.episodes,
-            max_steps_per_episode=args.h * args.w,
+            max_steps_per_episode=args.h * args.w*2,
             print_every=100,
             avg_window=100,
-            patience=20,
-            min_episodes_before_early_stop=50,
+            patience=250,
+            min_episodes_before_early_stop=150,
         )
 
         train_a2c_gridworld(
             env=train_env,
             config=cfg,
-            project="gridworld_a2c",
+            project="gridworld",
             run_name=args.name,
             gif_path=gif_path,
             eval_env=eval_env,
@@ -474,12 +474,12 @@ def main():
             seq_len=20,
             burn_in=5,
             batch_size=32,
-            buffer_size=500,
-            min_episodes=20,
+            buffer_size=5000,
+            min_episodes=500,
             epsilon_start=1.0,
             epsilon_end=0.05,
-            epsilon_decay=20_000,
-            sync_rate=1_000,
+            epsilon_decay=60000,
+            sync_rate=1000,
             hidden_dim=128,
             avg_window=100,
             optimizer="rmsprop",
@@ -493,7 +493,7 @@ def main():
         train_drqn_gridworld(
             env=train_env,
             max_steps=args.max_steps,
-            project="gridworld_drqn",
+            project="gridworld",
             run_name=args.name,
             gif_path=gif_path,
             eval_env=eval_env,

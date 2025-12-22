@@ -24,8 +24,9 @@ class GymVectorGridWorldEnv(gym.Env):
     ВАЖНО:
       - Все под‑среды используют ОДИН И ТОТ ЖЕ seed для генерации карты
         (пол/препятствия), чтобы карта была идентичной;
-      - при этом разный сид при reset() через SyncVectorEnv даёт
-        разные стартовые позиции/шумы, но сама карта одинакова.
+      - Карта генерируется ОДИН РАЗ при создании среды и кэшируется;
+      - при reset() используется закэшированная карта, гарантируя
+        идентичность карт во всех эпизодах и под-средах.
     """
 
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
@@ -55,17 +56,19 @@ class GymVectorGridWorldEnv(gym.Env):
         if make_env_kwargs is None:
             make_env_kwargs = {}
 
-
         self._make_env_kwargs = dict(make_env_kwargs)
         self._make_env_kwargs.pop("seed", None)
 
         self._base_seed = base_seed
         self._render_mode = render_mode
 
+        # ======= ИСПРАВЛЕНИЕ: фиксируем seed карты =======
+        # Если base_seed не передан, генерируем случайный seed ОДИН РАЗ
         if base_seed is None:
-            map_seed = np.random.randint(0, 2**31 - 1)
+            self._map_seed = np.random.randint(0, 2**31 - 1)
         else:
-            map_seed = int(base_seed)
+            self._map_seed = int(base_seed)
+        # ==================================================
 
         env_fns: List[Callable[[], gym.Env]] = []
 
@@ -74,7 +77,7 @@ class GymVectorGridWorldEnv(gym.Env):
                 def _thunk():
                     env = GridWorldEnv(
                         **self._make_env_kwargs,
-                        seed=map_seed,
+                        seed=self._map_seed,
                         render_mode=render_mode,
                     )
                     return env
@@ -95,6 +98,30 @@ class GymVectorGridWorldEnv(gym.Env):
         self.w = example_env.w
         self.n_colors = example_env.n_colors
 
+        # ======= ИСПРАВЛЕНИЕ: генерируем и кэшируем карту ОДИН РАЗ =======
+        # Делаем начальный reset чтобы инициализировать карту
+        self.vec_env.reset(seed=self._map_seed)
+        
+        # Кэшируем карту первой подсреды как эталон
+        first_env: GridWorldEnv = self.vec_env.envs[0]
+        self._cached_grid = first_env.grid.copy()
+        
+        # Сохраняем параметры для восстановления цели
+        self._feature_goal = first_env.feature_goal
+        self._pos_goal = first_env.pos_goal.copy()
+        
+        # Синхронизируем карты во всех подсредах
+        self._sync_grids_from_cache()
+        # ==================================================================
+
+    def _sync_grids_from_cache(self) -> None:
+        """
+        Копирует закэшированную карту во все подсреды.
+        Гарантирует идентичность карт (цвета пола, препятствия, цель).
+        """
+        for env in self.vec_env.envs:
+            env.grid = self._cached_grid.copy()
+
     def reset(
         self,
         seed: Optional[Union[int, List[int]]] = None,
@@ -102,11 +129,26 @@ class GymVectorGridWorldEnv(gym.Env):
     ):
         """
         Сбрасывает ВСЕ под‑среды.
+        
+        ВАЖНО: карта (цвета пола, препятствия) НЕ перегенерируется при reset().
+        Используется закэшированная карта, созданная при инициализации среды.
+        Это гарантирует, что все эпизоды проходят на идентичной карте.
+        
         seed:
-          - int
+          - int → используется для стартовых позиций агентов;
           - sequence[int] длины n_envs → отдельный сид для каждой среды.
         """
         obs, info = self.vec_env.reset(seed=seed, options=options)
+        
+        # ======= ИСПРАВЛЕНИЕ: восстанавливаем закэшированную карту =======
+        # После reset() подсреды могли перегенерировать карту,
+        # поэтому принудительно восстанавливаем закэшированную версию
+        self._sync_grids_from_cache()
+        
+        # Обновляем наблюдения, т.к. карта могла измениться
+        obs = np.array([env._get_obs() for env in self.vec_env.envs], dtype=np.float32)
+        # ==================================================================
+        
         return obs, info
 
     def step(self, action):
