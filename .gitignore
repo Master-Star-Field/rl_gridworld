@@ -24,6 +24,6 @@ gifs/
 gridworld_*/
 checkpoints/
 mnist_data/
-
+.continue
 # UV
 .uv/
