@@ -1,0 +1,1924 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../agents/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Среды - RL GridWorld Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="RL GridWorld Documentation" class="md-header__button md-logo" aria-label="RL GridWorld Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            RL GridWorld Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Среды
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="RL GridWorld Documentation" class="md-nav__button md-logo" aria-label="RL GridWorld Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    RL GridWorld Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Главная
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Среды
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Среды
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#rl_grid_world.envs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        envs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="envs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GridWorldEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GridWorldEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldEnv.step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldMnistEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GridWorldMnistEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GridWorldMnistEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldMnistEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldMnistEnv.render_map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        render_map
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GymVectorGridWorldEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GymVectorGridWorldEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        step
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.render" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        render
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VectorGridWorldEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="VectorGridWorldEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv.step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        step
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv.render" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        render
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Агенты
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Вспомогательные функции
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Результаты
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#rl_grid_world.envs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        envs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="envs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GridWorldEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GridWorldEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldEnv.step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        step
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldMnistEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GridWorldMnistEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GridWorldMnistEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldMnistEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GridWorldMnistEnv.render_map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        render_map
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GymVectorGridWorldEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="GymVectorGridWorldEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        __init__
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        step
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.GymVectorGridWorldEnv.render" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        render
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        VectorGridWorldEnv
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="VectorGridWorldEnv">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv.reset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv.step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        step
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rl_grid_world.envs.VectorGridWorldEnv.render" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        render
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="api">API: Среды</h1>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<h2 id="rl_grid_world.envs" class="doc doc-heading">
+            <span class="doc doc-object-name doc-module-name">envs</span>
+
+
+</h2>
+
+    <div class="doc doc-contents first">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="rl_grid_world.envs.GridWorldEnv" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">GridWorldEnv</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="gymnasium.Env">Env</span></code></p>
+
+
+
+        <p>Среда-сетка для задач обучения с подкреплением.</p>
+<p>Среда представляет собой двумерную сетку размером h*w, окруженную стенами.
+Внутри сетки могут располагаться препятствия и одна клетка-цель.
+Пол может иметь разные цвета (типы), задаваемые параметром n_colors.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.h">h</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Высота внутренней сетки (без стен).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.w">w</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Ширина внутренней сетки (без стен).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.n_colors">n_colors</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Количество типов пола (0 до n_colors-1).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.pos_goal">pos_goal</span></code></td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Позиция цели в координатах внутренней сетки.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.start_pos">start_pos</span></code></td>
+            <td>
+                  <code><span title="typing.Union">Union</span>[<span title="typing.Tuple">Tuple</span>[<span title="int">int</span>, <span title="int">int</span>], <span title="numpy.ndarray">ndarray</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Начальная позиция агента или распределение вероятностей.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.see_obstacle">see_obstacle</span></code></td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Определяет, видны ли препятствия при наблюдении.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.render_mode">render_mode</span></code></td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Режим отрисовки ('human' или 'rgb_array').</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.obstacle_mask">obstacle_mask</span></code></td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Булева маска препятствий размером (h, w).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.feature_wall">feature_wall</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Значение признака для стен в векторе наблюдений.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.feature_obstacle">feature_obstacle</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Значение признака для препятствий.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.feature_goal">feature_goal</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Значение признака для цели.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.grid">grid</span></code></td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Внутренняя сетка размером (h+2, w+2) с границами-стенами.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.agent_pos">agent_pos</span></code></td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Текущая позиция агента в координатах сетки со стенами.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.see_pos">see_pos</span></code></td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Позиция, которую "видит" агент для наблюдений.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.seed">seed</span></code></td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Зерно для генерации среды, для возможности повторно сгенерировать карту.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.step_reward">step_reward</span></code></td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Награда/штраф за обычный шаг (по умолчанию 0.0).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="rl_grid_world.envs.GridWorldEnv.goal_reward">goal_reward</span></code></td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Награда за достижение цели (по умолчанию 1.0).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<details class="action-space" open>
+  <summary>Action Space</summary>
+  <p>Пространство действий — дискретное с 4 направлениями:</p>
+<ul>
+<li>0: вверх     ( [-1,  0] )</li>
+<li>1: вправо    ( [ 0,  1] )</li>
+<li>2: вниз      ( [ 1,  0] )</li>
+<li>3: влево     ( [ 0, -1] )</li>
+</ul>
+</details>
+
+<details class="observation-space" open>
+  <summary>Observation Space</summary>
+  <p>Пространство наблюдений — вещественный вектор размерности
+(n_colors + 3), закодированный как one-hot вектор,
+где 3 дополнительных признака соответствуют стене, препятствию и цели.</p>
+<div class="arithmatex">\[\text{shape} = (\text{n_{colors}} + 3,)\]</div>
+</details>
+
+<details class="reward" open>
+  <summary>Reward</summary>
+  <p>По умолчанию:
+  - Награда goal_reward (1.0) при достижении цели (клетки GOAL),
+  - Награда step_reward (0.0) в остальных случаях.</p>
+<p>Можно включить shaping, задав отрицательный step_reward
+(например, -0.01, чтобы поощрять быстрый путь).</p>
+</details>
+
+<details class="episode-termination" open>
+  <summary>Episode Termination</summary>
+  <p>Эпизод завершается, когда агент достигает клетки с целью или же когда превышено выделенное
+количество шагов на эпизодов (по умолчанию берется w*h)</p>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GridWorldEnv.reset" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">reset</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">reset</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Перезапуск среды.</p>
+
+
+<details class="seed" open>
+  <summary>seed</summary>
+  <ul>
+<li>передаётся в super().reset(seed=seed) → инициализирует self.np_random;</li>
+<li>используется в _init_grid ТОЛЬКО если self.seed is None и карта ещё не сохранена.</li>
+</ul>
+</details>
+
+<details class="возвращает" open>
+  <summary>Возвращает</summary>
+  <p>obs:  np.ndarray shape (obs_dim,)
+info: {}</p>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GridWorldEnv.step" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">step</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Выполняет одно действие в среде.</p>
+
+
+<details class="награда" open>
+  <summary>Награда</summary>
+  <ul>
+<li>self.step_reward за обычный шаг;</li>
+<li>self.goal_reward при достижении цели.</li>
+</ul>
+</details>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="rl_grid_world.envs.GridWorldMnistEnv" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">GridWorldMnistEnv</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="GridWorldEnv (rl_grid_world.envs.grid_world.GridWorldEnv)" href="#rl_grid_world.envs.GridWorldEnv">GridWorldEnv</a></code></p>
+
+
+
+        <p>Вариант GridWorld, где наблюдение кодируется случайным 
+изображением из MNIST по "цифре", соответствующей типу клетки.</p>
+<p>Соответствие следующее:</p>
+<ul>
+<li>пол цвета c (0 .. n_colors-1) -&gt; цифра c;</li>
+<li>стена               -&gt; цифра 7;</li>
+<li>препятствие         -&gt; цифра 8;</li>
+<li>цель                -&gt; цифра 9.</li>
+</ul>
+
+
+<details class="ограничения" open>
+  <summary>Ограничения</summary>
+  <ul>
+<li>изображение вырезается как центр-кроп из 28x28 MNIST
+  до размера image_size x image_size (image_size &gt;= 12).</li>
+</ul>
+</details>
+
+<details class="наблюдение" open>
+  <summary>Наблюдение</summary>
+  <ul>
+<li>если flatten=True:
+      obs.shape = (image_size * image_size,)</li>
+<li>иначе:
+      obs.shape = (image_size, image_size)</li>
+</ul>
+</details>
+
+<details class="параметр-step_reward-наследуется-от-gridworldenv" open>
+  <summary>Параметр step_reward наследуется от GridWorldEnv</summary>
+  <ul>
+<li>по умолчанию 0.0;</li>
+<li>можно задать отрицательное значение, чтобы ускорить достижение цели.</li>
+</ul>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GridWorldMnistEnv.reset" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">reset</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">reset</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Перезапуск среды.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GridWorldMnistEnv.render_map" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">render_map</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">render_map</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Визуализация поля.</p>
+
+
+<details class="digit_render_mode" open>
+  <summary>digit_render_mode</summary>
+  <ul>
+<li>"text" : цветные тайлы + напечатанные цифры;</li>
+<li>"mnist": поле из MNIST-изображений (мозаика), агент поверх.</li>
+</ul>
+</details>
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="rl_grid_world.envs.GymVectorGridWorldEnv" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">GymVectorGridWorldEnv</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="gymnasium.Env">Env</span></code></p>
+
+
+
+        <p>Векторная GridWorld‑среда на базе gymnasium.vector.SyncVectorEnv.</p>
+
+
+<details class="внутри" open>
+  <summary>Внутри</summary>
+  <ul>
+<li>n_envs независимых копий одиночной GridWorldEnv;</li>
+<li>каждую копию создаём отдельной фабрикой env_fn;</li>
+<li>SyncVectorEnv управляет всем батчем.</li>
+</ul>
+</details>
+
+<details class="важно" open>
+  <summary>ВАЖНО</summary>
+  <ul>
+<li>Все под‑среды используют ОДИН И ТОТ ЖЕ seed для генерации карты
+  (пол/препятствия), чтобы карта была идентичной;</li>
+<li>Карта генерируется ОДИН РАЗ при создании среды и кэшируется;</li>
+<li>при reset() используется закэшированная карта, гарантируя
+  идентичность карт во всех эпизодах и под-средах.</li>
+</ul>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GymVectorGridWorldEnv.__init__" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">__init__</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__init__</span><span class="p">(</span><span class="n">n_envs</span><span class="p">,</span> <span class="n">make_env_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">base_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">render_mode</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>n_envs</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>количество копий среды.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>make_env_kwargs</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="dict">dict</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>kwargs, которые будут переданы в GridWorldEnv(...)
+             для создания каждой копии среды.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>base_seed</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>базовый сид. Используется для генерации КАРТЫ (map_seed).</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>render_mode</code>
+            </td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>режим рендера для под‑сред ('human' или 'rgb_array').</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GymVectorGridWorldEnv.reset" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">reset</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">reset</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Сбрасывает ВСЕ под‑среды.</p>
+<p>ВАЖНО: карта (цвета пола, препятствия) НЕ перегенерируется при reset().
+Используется закэшированная карта, созданная при инициализации среды.
+Это гарантирует, что все эпизоды проходят на идентичной карте.</p>
+
+
+<details class="seed" open>
+  <summary>seed</summary>
+  <ul>
+<li>int → используется для стартовых позиций агентов;</li>
+<li>sequence[int] длины n_envs → отдельный сид для каждой среды.</li>
+</ul>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GymVectorGridWorldEnv.step" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">step</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+
+
+<details class="векторный-шаг" open>
+  <summary>Векторный шаг</summary>
+  <ul>
+<li>action: int → одно действие для всех под‑сред;</li>
+<li>action: np.ndarray shape (n_envs,) → своё действие для каждой.</li>
+</ul>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.GymVectorGridWorldEnv.render" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">render</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">render</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Тип рендеринга берётся из исходной среды.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="rl_grid_world.envs.VectorGridWorldEnv" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">VectorGridWorldEnv</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="gymnasium.Env">Env</span></code></p>
+
+
+
+        <p>Векторизованная GridWorld‑среда.</p>
+<p>Внутри хранится 'n_envs' независимых копий одиночной среды.
+На каждый шаг подаётся действие для КАЖДОЙ копии (actions[i]),
+а на выходе возвращаются массивы по всем под‑средам.</p>
+<p>Интерфейс шага:</p>
+<div class="highlight"><pre><span></span><code>obs, reward, terminated, truncated, info = env.step(actions)
+</code></pre></div>
+<p>где:</p>
+<div class="highlight"><pre><span></span><code>actions: np.ndarray shape (n_envs,) или скаляр int (бродкастится);
+
+obs:        np.ndarray shape (n_envs, single_obs_dim),
+reward:     np.ndarray shape (n_envs,), значения step_reward или goal_reward;
+terminated: np.ndarray shape (n_envs,), True если env достигла цели;
+truncated:  np.ndarray shape (n_envs,), True если превышен лимит шагов;
+info: dict с полями:
+    - &quot;reward_per_env&quot;:      reward;
+    - &quot;terminated_per_env&quot;:  terminated;
+    - &quot;truncated_per_env&quot;:   truncated.
+</code></pre></div>
+<p>Каждый эпизод под‑среды:
+- начинается в reset();
+- заканчивается, когда агент дошёл до цели или превысил лимит шагов.</p>
+<p>Векторная логика (движение, коллизии, награды) реализована целиком через numpy.</p>
+
+
+<details class="параметры-награды" open>
+  <summary>Параметры награды</summary>
+  <ul>
+<li>step_reward: награда/штраф за обычный шаг (по умолчанию 0.0);</li>
+<li>goal_reward: награда за достижение цели (по умолчанию 1.0).</li>
+</ul>
+</details>
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.VectorGridWorldEnv.reset" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">reset</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">reset</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Сбрасывает ВСЕ n_envs копий среды.</p>
+<p>ВАЖНО: карта (цвета пола, препятствия) НЕ перегенерируется при reset().
+Используется закэшированная карта, созданная при инициализации среды.
+Это гарантирует, что все эпизоды проходят на идентичной карте.</p>
+
+
+<details class="возвращает" open>
+  <summary>Возвращает</summary>
+  <p>obs:  np.ndarray shape (n_envs, single_obs_dim)
+info: dict (пока пустой).</p>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.VectorGridWorldEnv.step" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">step</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">step</span><span class="p">(</span><span class="n">actions</span><span class="p">)</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Выполняет один векторизованный шаг.</p>
+
+
+<details class="actions" open>
+  <summary>actions</summary>
+  <ul>
+<li>int: одно и то же действие для всех envs;</li>
+<li>или np.ndarray shape (n_envs,) со своими действиями.</li>
+</ul>
+</details>
+
+<details class="возвращает" open>
+  <summary>Возвращает</summary>
+  <p>obs:        (n_envs, single_obs_dim)
+reward:     (n_envs,) float32
+terminated: (n_envs,) bool
+truncated:  (n_envs,) bool
+info: dict с теми же векторами.</p>
+</details>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="rl_grid_world.envs.VectorGridWorldEnv.render" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">render</span>
+
+
+</h4>
+<div class="doc-signature highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">render</span><span class="p">()</span>
+</code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>(render_mode='human'),
+(render_mode='rgb_array').</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
